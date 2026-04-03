@@ -2,28 +2,32 @@
 
 ## Overview
 
-A comprehensive REST API for IPv4 address and subnet management built with **Spring Boot 3.5.13** and **Java 21**. Automates IP allocation, subnet creation, utilization tracking, and provides conflict detection with full device metadata support.
+A comprehensive REST API for IPv4 address and subnet management built with **Spring Boot 3.5.13** and **Java 21**. Automates IP allocation, subnet creation, utilization tracking, and provides conflict detection with full device metadata support for enterprise-grade network administration.
 
-**Key Features:**
-- Automated subnet management with CIDR validation
-- Individual, sequential, and bulk IP allocation
-- Real-time utilization metrics and device tracking
-- Duplicate prevention and range validation
-- Transactional consistency with concurrent safety
+**Core Capabilities:**
+- Automated subnet management with CIDR notation and validation
+- Individual, sequential, and bulk IP allocation with intelligent detection
+- Real-time utilization metrics and comprehensive device metadata tracking
+- Duplicate prevention, range validation, and referential integrity checks
+- Transactional consistency with safeguards against concurrent allocation conflicts
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
-| Language | Java 21 |
-| Framework | Spring Boot 3.5.13 |
-| Database | SQLite |
-| Build | Maven 3.x |
-| ORM | Hibernate |
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| Language | Java 21 | Core runtime environment |
+| Framework | Spring Boot 3.5.13 | REST API and application framework |
+| Persistence | Spring Data JPA | ORM and database abstraction |
+| Database | SQLite | Lightweight file-based datastore |
+| Build Tool | Maven 3.x | Dependency management and compilation |
+| API Tool | Postman | API testing and documentation |
+| IDE | VSCode | Development environment |
 
 ## Data Models
 
-### Subnet
+### Subnet Entity
+Represents a logical IP subnet with CIDR notation and calculated network properties.
+
 ```json
 {
   "id": 1,
@@ -33,11 +37,22 @@ A comprehensive REST API for IPv4 address and subnet management built with **Spr
   "firstIp": "192.168.1.1",
   "lastIp": "192.168.1.254",
   "totalIps": 256,
-  "description": "Office Network"
+  "description": "Office Network Segment"
 }
 ```
 
-### IP Address
+**Properties:**
+- `cidr`: IPv4 CIDR notation (e.g., 192.168.1.0/24)
+- `networkAddress`: Network address (auto-calculated)
+- `broadcastAddress`: Broadcast address (auto-calculated)
+- `firstIp`: First usable IP (auto-calculated)
+- `lastIp`: Last usable IP (auto-calculated)
+- `totalIps`: Total IPs in subnet (2^(32-prefix))
+- `description`: Administrative metadata
+
+### IP Address Entity
+Represents an individual IPv4 address with device metadata.
+
 ```json
 {
   "id": 42,
@@ -51,63 +66,87 @@ A comprehensive REST API for IPv4 address and subnet management built with **Spr
 }
 ```
 
+**Properties:**
+- `ip`: IPv4 address in string format
+- `allocated`: Boolean allocation status (true/false)
+- `hostname`: Device hostname for identification
+- `macAddress`: 48-bit MAC address
+- `deviceType`: Device classification (Laptop, Server, Printer, etc.)
+- `owner`: Device owner or assigned user
+- `subnet`: Foreign key to parent Subnet
+
 ## Core Features
 
 **Subnet Management:**
-- CIDR validation and automatic network calculations
-- Update descriptions, view utilization metrics
-- Prevent deletion of subnets with allocated IPs
-- Pagination support for large datasets
+- CIDR validation with automatic network calculations
+- Create, read, update, and delete operations
+- Real-time utilization metrics (total, allocated, free)
+- Pagination support for large subnet collections
+- Safe deletion prevention when IPs allocated
 
-**IP Allocation:**
-- Allocate specific IPs with duplicate prevention
-- Auto-allocate next available IP
-- Bulk allocate multiple IPs in one operation
-- Release IPs back to available pool
+**IP Allocation Strategies:**
+- **Specific Allocation:** Request exact IP with duplicate prevention
+- **Sequential Allocation:** Auto-select next available IP
+- **Bulk Operations:** Allocate multiple IPs in single transaction
+- **Device Metadata:** Store hostname, MAC, type, owner per IP
+- **Deallocation:** Release IPs back to available pool instantly
 
 **Validation & Safety:**
-- Duplicate prevention, range validation, CIDR enforcement
-- Referential integrity checks
-- Transactional consistency
+- Duplicate prevention with existence checks before allocation
+- CIDR format enforcement and range validation
+- Referential integrity for subnet-IP relationships
+- Transactional consistency for concurrent operations
+- Automatic state management with allocation flags
 
 ## Setup & Installation
 
 ### Prerequisites
-- Java Development Kit (JDK) 21+
-- Maven 3.6.0+
-- Git
+- Java Development Kit (JDK) 21 or higher
+- Apache Maven 3.6.0 or higher
+- Git for repository cloning
+- SQLite (included with application)
 
-### Quick Start
+### Installation Steps
 ```bash
-# Clone and navigate to project
+# 1. Clone repository
 git clone <repository-url>
 cd ipam
 
-# Build
+# 2. Build project with Maven
 mvn clean install
 
-# Run
+# 3. Run Spring Boot application
 mvn spring-boot:run
 ```
 
-The application starts on `http://localhost:8080` and creates `ipam.db` automatically.
+**Expected Output:**
+```
+Started IpamApplication in X.XXX seconds
+SQLite database 'ipam.db' initialized at project root
+Available at: http://localhost:8080
+```
 
+### Verify Installation
+```bash
+curl http://localhost:8080/subnet
+# Returns: []
+```
 
 ## API Endpoints
 
-### Subnet Endpoints
+### Subnet Management
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/subnet` | Create subnet with CIDR |
-| GET | `/subnet` | Get all subnets |
-| GET | `/subnet/page?page=0&size=10` | Get subnets with pagination |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/subnet` | Create new subnet with CIDR |
+| GET | `/subnet` | Retrieve all subnets |
 | GET | `/subnet/{id}` | Get subnet by ID |
-| PUT | `/subnet/{id}` | Update subnet description |
-| GET | `/subnet/utilization/{id}` | Get subnet utilization |
-| DELETE | `/subnet/{id}` | Delete subnet (only if empty) |
+| PUT | `/subnet/{id}` | Update subnet metadata |
+| DELETE | `/subnet/{id}` | Delete subnet (if empty) |
+| GET | `/subnet/utilization/{id}` | Get usage statistics |
+| GET | `/subnet/page` | Paginated subnet retrieval |
 
-**Create Subnet:**
+**Create Subnet Example:**
 ```bash
 POST /subnet
 Content-Type: application/json
@@ -117,27 +156,22 @@ Content-Type: application/json
   "description": "Office Network"
 }
 ```
+Response: `201 Created` with subnet object
 
-**Response:** 201 Created with subnet object
+### IP Address Management
 
----
-
-### IP Address Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
+| Method | Endpoint | Description |
+|--------|----------|-------------|
 | POST | `/ip/allocate-specific` | Allocate specific IP |
-| POST | `/ip/allocate-next/{subnetId}` | Allocate next available IP |
+| POST | `/ip/allocate-next/{subnetId}` | Auto-allocate next available |
 | POST | `/ip/bulk/{subnetId}/{count}` | Allocate multiple IPs |
 | GET | `/ip` | Get all IP addresses |
-| GET | `/ip/subnet/{subnetId}` | Get IPs in subnet |
-| PUT | `/ip/release/{id}` | Release IP address |
+| GET | `/ip/subnet/{subnetId}` | Get IPs within subnet |
+| PUT | `/ip/release/{id}` | Release/deallocate IP |
 
-**Allocate Specific IP:**
+**Allocate Specific IP Example:**
 ```bash
 POST /ip/allocate-specific
-Content-Type: application/json
-
 {
   "subnetId": 1,
   "ip": "192.168.1.100",
@@ -147,93 +181,85 @@ Content-Type: application/json
   "owner": "John Doe"
 }
 ```
+Response: `200 OK` with IP object
 
-**Response:** 200 OK with IP object
-
-**Allocate Next Available:**
-```bash
-POST /ip/allocate-next/1
-```
-Auto-selects next free IP from subnet.
-
-**Bulk Allocate:**
+**Bulk Allocation:**
 ```bash
 POST /ip/bulk/1/50
 ```
-Allocates 50 consecutive IPs from subnet 1.
+Allocates 50 consecutive IPs from subnet 1
 
 **Release IP:**
 ```bash
 PUT /ip/release/42
 ```
-Deallocates IP and returns it to available pool.
+Deallocates IP and returns to available pool
 
 ### HTTP Status Codes
-- `200 OK` - Success
-- `201 Created` - Resource created
-- `400 Bad Request` - Invalid format or malformed request
-- `404 Not Found` - Resource not found
-- `409 Conflict` - Duplicate IP, subnet has allocated IPs
-- `500 Internal Server Error` - No available IPs, server error
+- `200 OK`: Successful operation
+- `201 Created`: Resource successfully created
+- `400 Bad Request`: Invalid format or parameters
+- `404 Not Found`: Resource not found
+- `409 Conflict`: Duplicate IP or subnet has allocated IPs
+- `500 Internal Server Error`: Server error or no available IPs
+
+## Postman Integration
+
+### Setup Postman
+1. Open Postman application
+2. Click "File" → "Import"
+3. Select `ipam-postman-collection.json`
+4. Create new environment or use default
+
+### Environment Variables
+```
+base_url: http://localhost:8080
+```
+
+### Pre-Configured Collections
+**Subnet Requests:**
+- Create Subnet - POST /subnet
+- Get All Subnets - GET /subnet
+- Get Subnet by ID - GET /subnet/{id}
+- Update Subnet - PUT /subnet/{id}
+- Check Utilization - GET /subnet/utilization/{id}
+- Delete Subnet - DELETE /subnet/{id}
+
+**IP Requests:**
+- Allocate Specific - POST /ip/allocate-specific
+- Allocate Next - POST /ip/allocate-next/{subnetId}
+- Bulk Allocate - POST /ip/bulk/{subnetId}/{count}
+- Get All IPs - GET /ip
+- Get IPs by Subnet - GET /ip/subnet/{subnetId}
+- Release IP - PUT /ip/release/{id}
+
+### Testing Workflow
+1. Send POST /subnet to create network
+2. Copy returned subnet ID
+3. Use ID for IP allocation requests
+4. Monitor with GET /subnet/utilization/{id}
+5. Release IPs with PUT /ip/release/{id}
 
 ## Implementation Details
 
-**CIDR Calculation:** Uses bit masking - Network Address (IP AND mask), Broadcast Address (Network OR ~mask), First IP (Network + 1), Last IP (Broadcast - 1), Total IPs (2^(32 - prefix)).
+**CIDR Calculation Algorithm:**
+- Network Address: IP AND subnet_mask
+- Broadcast: Network OR inverted_mask
+- First IP: Network + 1
+- Last IP: Broadcast - 1
+- Total IPs: 2^(32 - prefix_length)
 
-**IP Allocation:** Sequential search with duplicate prevention, range validation, and database transactions for concurrent safety.
+**IP Allocation:**
+- Sequential scanning from first to last usable IP
+- Duplicate prevention with existence validation
+- Range validation ensuring IP within subnet bounds
+- Atomic database transactions for concurrency safety
 
-**Data Persistence:** SQLite database (`ipam.db`), Hibernate ORM with auto schema creation, SQL logging available.
-
-## Workflows
-
-### Setup Network
-```bash
-# Create subnet
-curl -X POST http://localhost:8080/subnet \
-  -H "Content-Type: application/json" \
-  -d '{"cidr": "10.0.0.0/24", "description": "Production"}'
-
-# Check utilization
-curl http://localhost:8080/subnet/utilization/1
-```
-
-### Allocate IPs
-```bash
-# Allocate specific IP
-curl -X POST http://localhost:8080/ip/allocate-specific \
-  -H "Content-Type: application/json" \
-  -d '{
-    "subnetId": 1,
-    "ip": "10.0.0.100",
-    "hostname": "server-01",
-    "deviceType": "Server"
-  }'
-
-# Bulk allocate
-curl -X POST http://localhost:8080/ip/bulk/1/50
-
-# View allocated IPs
-curl http://localhost:8080/ip/subnet/1
-```
-
-### Manage IPs
-```bash
-# Release IP
-curl -X PUT http://localhost:8080/ip/release/42
-
-# Allocate next available
-curl -X POST http://localhost:8080/ip/allocate-next/1
-```
-
-## Troubleshooting
-
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| Invalid CIDR format | Wrong format | Use `XXX.XXX.XXX.XXX/PREFIX` (0-32) |
-| IP already allocated | IP in use | Use `allocate-next` or release IP first |
-| IP not in subnet range | IP outside subnet | Verify IP is between `firstIp` and `lastIp` |
-| Cannot delete subnet | IPs still allocated | Release all IPs before deletion |
-| No available IPs | Subnet full | Expand subnet or release IPs |
+**Data Persistence:**
+- SQLite database (`ipam.db`) in project root
+- Spring Data JPA for ORM mapping
+- Automatic schema creation via Hibernate DDL
+- SQL logging available in application.properties
 
 ## Database Schema
 
@@ -263,92 +289,121 @@ CREATE TABLE ip_address (
 
 ## Configuration
 
-Edit `application.properties` to customize:
+Edit `application.properties` in `src/main/resources/`:
 
 ```properties
-# Database location
-spring.datasource.url=jdbc:sqlite:/custom/path/ipam.db
+# Database
+spring.datasource.url=jdbc:sqlite:ipam.db
 
-# SQL logging
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.format_sql=true
-
-# Server port
-server.port=9090
-
-# Schema management
+# JPA/Hibernate
 spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+
+# Logging
+spring.jpa.properties.hibernate.format_sql=true
+logging.level.org.hibernate.SQL=DEBUG
+
+# Server
+server.port=8080
+server.servlet.context-path=/
 ```
 
-## Project Structure
+## VSCode Development Setup
 
+### Recommended Extensions
+- Extension Pack for Java (Microsoft)
+- Spring Boot Extension Pack (Pivotal)
+- REST Client (Huachao Mao)
+- Thunder Client (Ranga Vadhineni)
+
+### Run Configuration
+Create `.vscode/launch.json`:
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Spring Boot App",
+      "type": "java",
+      "name": "Spring Boot App",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "com.ipam.IpamApplication",
+      "projectName": "ipam",
+      "preLaunchTask": "maven: clean",
+      "presentation": {
+        "options": {
+          "statline": "compact"
+        }
+      },
+      "args": "",
+      "console": "integratedTerminal"
+    }
+  ]
+}
+```
+
+### Project Structure
 ```
 ipam/
 ├── src/main/java/com/ipam/
-│   ├── IpamApplication.java              # Entry point
-│   ├── controller/
-│   │   ├── IPController.java             # IP endpoints
-│   │   └── SubnetController.java         # Subnet endpoints
-│   ├── service/
-│   │   ├── IPService.java                # IP logic
-│   │   └── SubnetService.java            # Subnet logic
-│   ├── model/
-│   │   ├── IPAddress.java
-│   │   └── Subnet.java
-│   ├── repository/
-│   │   ├── IPRepository.java
-│   │   └── SubnetRepository.java
-│   ├── dto/
-│   │   ├── IpRequestDTO.java
-│   │   └── IpResponseDTO.java
-│   ├── util/
-│   │   └── IPUtils.java                  # CIDR utilities
-│   ├── config/
-│   │   ├── SecurityConfig.java
-│   │   └── SwaggerConfig.java
-│   └── exception/
-│       ├── GlobalExceptionHandler.java
-│       └── ResourceNotFoundException.java
+│   ├── IpamApplication.java
+│   ├── controller/ (REST endpoints)
+│   ├── service/ (Business logic)
+│   ├── model/ (JPA entities)
+│   ├── repository/ (Data access)
+│   ├── dto/ (Transfer objects)
+│   ├── util/ (CIDR utilities)
+│   ├── config/ (Security, Swagger)
+│   └── exception/ (Error handling)
+├── src/main/resources/
+│   └── application.properties
 ├── pom.xml
-├── Readme.md
 └── ipam-postman-collection.json
 ```
 
-## Testing with Curl
+## Common Workflows
 
+**Network Setup:**
 ```bash
-# Create subnet
 curl -X POST http://localhost:8080/subnet \
   -H "Content-Type: application/json" \
-  -d '{"cidr": "172.16.0.0/16", "description": "Test"}'
-
-# List subnets
-curl http://localhost:8080/subnet
-
-# Allocate IP
-curl -X POST http://localhost:8080/ip/allocate-specific \
-  -H "Content-Type: application/json" \
-  -d '{"subnetId": 1, "ip": "172.16.0.10"}'
-
-# View utilization
+  -d '{"cidr":"10.0.0.0/24","description":"Production"}'
 curl http://localhost:8080/subnet/utilization/1
 ```
 
-## Postman Collection
+**IP Allocation:**
+```bash
+curl -X POST http://localhost:8080/ip/allocate-specific \
+  -H "Content-Type: application/json" \
+  -d '{"subnetId":1,"ip":"10.0.0.50","hostname":"server-01"}'
+curl -X POST http://localhost:8080/ip/bulk/1/100
+```
 
-Use the included `ipam-postman-collection.json`:
-1. Open Postman
-2. Click "Import" → "Upload Files"
-3. Select the JSON file
-4. All endpoints ready to test
+**IP Management:**
+```bash
+curl http://localhost:8080/ip/subnet/1
+curl -X PUT http://localhost:8080/ip/release/42
+```
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "Invalid CIDR format" | Use XXX.XXX.XXX.XXX/PREFIX (0-32) |
+| "IP already allocated" | Use allocate-next or release first |
+| "IP not in subnet range" | Verify IP between firstIp-lastIp |
+| "Cannot delete subnet" | Release all IPs before deletion |
+| "No available IPs" | Expand subnet or release IPs |
+| Port 8080 in use | Change in application.properties |
 
 ## Contributing
 
-1. Fork repository
-2. Create feature branch: `git checkout -b feature/YourFeature`
-3. Commit changes: `git commit -am 'Add YourFeature'`
-4. Push: `git push origin feature/YourFeature`
-5. Open Pull Request
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/Feature`
+3. Commit changes: `git commit -am 'Add Feature'`
+4. Push branch: `git push origin feature/Feature`
+5. Create Pull Request
 
 ## License
 
@@ -357,12 +412,10 @@ MIT License - see LICENSE file for details
 ## Support
 
 For issues or questions:
-- Check documentation above
-- Review troubleshooting section
+- Review documentation above
 - Check Postman collection examples
+- Consult troubleshooting section
 - Review application logs
 
 ---
 
-**Version:** 0.0.1-SNAPSHOT  
-**Last Updated:** April 3, 2026
