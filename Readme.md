@@ -70,3 +70,41 @@ It provides:
 ```bash
 git clone <your-repo-link>
 cd ipam
+
+# 📡 API Endpoints
+
+## 🔹 Subnet APIs
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST   | /subnet | Create subnet |
+| GET    | /subnet | Get all subnets |
+| GET    | /subnet/page?page=0&size=5 | Get subnets with pagination |
+| GET    | /subnet/{id} | Get subnet by ID |
+| PUT    | /subnet/{id} | Update subnet |
+| DELETE | /subnet/{id} | Delete subnet |
+| GET    | /subnet/utilization/{id} | Get subnet utilization |
+
+---
+
+## 🔹 IP APIs
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST   | /ip/allocate-specific | Allocate specific IP |
+| POST   | /ip/allocate-next/{subnetId} | Allocate next available IP |
+| POST   | /ip/bulk/{subnetId}/{count} | Bulk IP allocation |
+| GET    | /ip | Get all IPs |
+| GET    | /ip/subnet/{subnetId} | Get IPs by subnet |
+| PUT    | /ip/release/{id} | Release IP |
+
+---
+
+## 🧪 Example Requests
+
+### Create Subnet
+```json
+{
+  "cidr": "192.168.1.0/24",
+  "description": "Office Network"
+}
