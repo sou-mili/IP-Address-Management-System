@@ -1,0 +1,220 @@
+{
+"info": {
+"name": "IPAM API Collection",
+"_postman_id": "12345-ipam-collection",
+"description": "Postman collection for IP Address Management System",
+"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+},
+"item": [
+
+```
+{
+  "name": "Create Subnet",
+  "request": {
+    "method": "POST",
+    "header": [
+      { "key": "Content-Type", "value": "application/json" }
+    ],
+    "url": {
+      "raw": "http://localhost:8080/subnet",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["subnet"]
+    },
+    "body": {
+      "mode": "raw",
+      "raw": "{\n  \"cidr\": \"192.168.1.0/24\",\n  \"description\": \"Office Network\"\n}"
+    }
+  }
+},
+
+{
+  "name": "Get All Subnets",
+  "request": {
+    "method": "GET",
+    "url": {
+      "raw": "http://localhost:8080/subnet",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["subnet"]
+    }
+  }
+},
+
+{
+  "name": "Get Subnet by ID",
+  "request": {
+    "method": "GET",
+    "url": {
+      "raw": "http://localhost:8080/subnet/1",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["subnet", "1"]
+    }
+  }
+},
+
+{
+  "name": "Pagination Subnets",
+  "request": {
+    "method": "GET",
+    "url": {
+      "raw": "http://localhost:8080/subnet/page?page=0&size=5",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["subnet", "page"],
+      "query": [
+        { "key": "page", "value": "0" },
+        { "key": "size", "value": "5" }
+      ]
+    }
+  }
+},
+
+{
+  "name": "Subnet Utilization",
+  "request": {
+    "method": "GET",
+    "url": {
+      "raw": "http://localhost:8080/subnet/utilization/1",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["subnet", "utilization", "1"]
+    }
+  }
+},
+
+{
+  "name": "Update Subnet",
+  "request": {
+    "method": "PUT",
+    "header": [
+      { "key": "Content-Type", "value": "application/json" }
+    ],
+    "url": {
+      "raw": "http://localhost:8080/subnet/1",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["subnet", "1"]
+    },
+    "body": {
+      "mode": "raw",
+      "raw": "{\n  \"description\": \"Updated Network\"\n}"
+    }
+  }
+},
+
+{
+  "name": "Delete Subnet",
+  "request": {
+    "method": "DELETE",
+    "url": {
+      "raw": "http://localhost:8080/subnet/1",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["subnet", "1"]
+    }
+  }
+},
+
+{
+  "name": "Allocate Specific IP",
+  "request": {
+    "method": "POST",
+    "header": [
+      { "key": "Content-Type", "value": "application/json" }
+    ],
+    "url": {
+      "raw": "http://localhost:8080/ip/allocate-specific",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["ip", "allocate-specific"]
+    },
+    "body": {
+      "mode": "raw",
+      "raw": "{\n  \"subnetId\": 1,\n  \"ip\": \"192.168.1.10\",\n  \"hostname\": \"PC1\",\n  \"macAddress\": \"AA:BB:CC\",\n  \"deviceType\": \"Laptop\",\n  \"owner\": \"User\"\n}"
+    }
+  }
+},
+
+{
+  "name": "Allocate Next IP",
+  "request": {
+    "method": "POST",
+    "url": {
+      "raw": "http://localhost:8080/ip/allocate-next/1",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["ip", "allocate-next", "1"]
+    }
+  }
+},
+
+{
+  "name": "Bulk Allocate IP",
+  "request": {
+    "method": "POST",
+    "url": {
+      "raw": "http://localhost:8080/ip/bulk/1/5",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["ip", "bulk", "1", "5"]
+    }
+  }
+},
+
+{
+  "name": "Get All IPs",
+  "request": {
+    "method": "GET",
+    "url": {
+      "raw": "http://localhost:8080/ip",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["ip"]
+    }
+  }
+},
+
+{
+  "name": "Get IPs by Subnet",
+  "request": {
+    "method": "GET",
+    "url": {
+      "raw": "http://localhost:8080/ip/subnet/1",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["ip", "subnet", "1"]
+    }
+  }
+},
+
+{
+  "name": "Release IP",
+  "request": {
+    "method": "PUT",
+    "url": {
+      "raw": "http://localhost:8080/ip/release/1",
+      "protocol": "http",
+      "host": ["localhost"],
+      "port": "8080",
+      "path": ["ip", "release", "1"]
+    }
+  }
+}
+```
+
+]
+}
